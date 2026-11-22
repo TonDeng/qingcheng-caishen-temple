@@ -1,0 +1,520 @@
+/* 财神庙互动场景：界面样式与桌面 / 移动端适配。
+   配色以朱红、宫墙红、鎏金为主，控件尺寸按触摸热区设计。 */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #4b0c14;
+  color: #fff0c8;
+  font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Noto Sans CJK SC", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 190, 90, 0.20), transparent 58%),
+    linear-gradient(180deg, #6d101c 0%, #8c1c20 45%, #5a0e16 100%);
+}
+
+#stage { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+#gameCanvas, #fxCanvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+#gameCanvas { cursor: crosshair; }
+
+/* 2D 特效叠层：粒子、功德浮字与暗角，不拦截画布点击。 */
+#fxCanvas { pointer-events: none; z-index: 2; }
+
+/* 3D 场景的舞台暗角，压住四周并让殿内金身更聚焦。 */
+body.is3d #stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 44%, rgba(16, 26, 22, 0) 40%, rgba(12, 22, 18, 0.46) 100%);
+}
+
+/* ---------- 顶部 HUD ---------- */
+
+#hud {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  pointer-events: none;
+}
+
+.hud-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid rgba(255, 214, 120, 0.55);
+  border-radius: 40px;
+  background: rgba(96, 18, 24, 0.78);
+  box-shadow: 0 6px 20px rgba(40, 4, 8, 0.35), inset 0 0 12px rgba(255, 190, 90, 0.12);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.avatar {
+  width: 38px; height: 38px;
+  flex: 0 0 38px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ffdf8c, #d79a2c);
+  color: #8c1c20;
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 22px; font-weight: 700;
+  border: 2px solid #fff0c8;
+}
+
+.hud-name { display: flex; align-items: baseline; gap: 8px; font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
+.hud-tag { font-size: 10px; font-weight: 400; color: #ffd977; opacity: 0.85; }
+.hud-stats { margin-top: 3px; font-size: 12px; color: #ffe2a0; white-space: nowrap; }
+.hud-stats b { font-size: 14px; color: #fff3c8; margin: 0 2px; }
+.hud-stats i { display: inline-block; width: 1px; height: 10px; margin: 0 8px; background: rgba(255, 214, 120, 0.4); vertical-align: -1px; }
+
+.hud-actions { display: flex; gap: 8px; pointer-events: auto; }
+
+.chip {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 214, 120, 0.55);
+  border-radius: 20px;
+  background: rgba(96, 18, 24, 0.78);
+  color: #ffe2a0;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: transform 0.12s, background 0.2s;
+}
+.chip:hover { background: rgba(140, 32, 36, 0.9); }
+.chip:active { transform: scale(0.95); }
+.chip.off { color: #c9a98a; border-color: rgba(255, 214, 120, 0.25); }
+
+/* ---------- 提示与飘条 ---------- */
+
+#hintBar {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  z-index: 5;
+  max-width: min(720px, 88vw);
+  padding: 9px 18px;
+  border: 1px solid rgba(255, 214, 120, 0.35);
+  border-radius: 22px;
+  background: rgba(86, 14, 20, 0.80);
+  color: #ffe9b8;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  backdrop-filter: blur(5px);
+}
+
+#toast {
+  position: absolute;
+  top: 88px; left: 50%;
+  transform: translate(-50%, -12px);
+  z-index: 8;
+  padding: 10px 24px;
+  border: 1px solid #ffd977;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #b8262c, #8c1c20);
+  color: #fff0c0;
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  box-shadow: 0 8px 24px rgba(40, 4, 8, 0.4);
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- 操作控件 ---------- */
+
+#actionBar {
+  position: absolute;
+  right: 20px;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 6;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.action {
+  position: relative;
+  width: 76px; height: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 2px solid #ffd977;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, #c8333b, #8c1c20);
+  color: #fff0c8;
+  font-family: "STKaiti", "KaiTi", "PingFang SC", serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(40, 4, 8, 0.45), inset 0 0 14px rgba(255, 210, 110, 0.18);
+  transition: transform 0.12s, box-shadow 0.2s, border-color 0.2s;
+  touch-action: manipulation;
+}
+.action small { font-size: 10px; font-weight: 400; opacity: 0.72; letter-spacing: 0; font-family: inherit; }
+.action.primary { background: radial-gradient(circle at 40% 30%, #e8a92c, #a4631a); color: #4a1a0c; border-color: #fff0c0; }
+.action:hover { box-shadow: 0 8px 22px rgba(255, 190, 90, 0.35); }
+.action:active { transform: scale(0.92); }
+.action.ready { border-color: #fff0c0; box-shadow: 0 0 18px rgba(255, 220, 130, 0.65); }
+
+#joystick {
+  display: none;
+  position: absolute;
+  left: 20px;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 6;
+  width: 124px; height: 124px;
+  border: 2px solid rgba(255, 214, 120, 0.55);
+  border-radius: 50%;
+  background: rgba(96, 18, 24, 0.42);
+  backdrop-filter: blur(3px);
+  touch-action: none;
+  align-items: center;
+  justify-content: center;
+}
+body.touch #joystick { display: flex; }
+#joystickKnob {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #ffdf8c, #c98a24);
+  border: 2px solid #fff0c8;
+  box-shadow: 0 4px 12px rgba(40, 4, 8, 0.45);
+  pointer-events: none;
+}
+.joy-label {
+  position: absolute;
+  bottom: -19px;
+  font-size: 11px;
+  color: #ffd977;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* ---------- 覆盖层：登录与帮助 ---------- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(58, 8, 14, 0.62);
+  backdrop-filter: blur(4px);
+}
+.overlay.hidden { display: none !important; }
+
+.panel {
+  width: min(420px, 92vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 30px 30px 26px;
+  border: 2px solid #ffd977;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 205, 100, 0.20), transparent 55%),
+    linear-gradient(165deg, #a9232b, #7a1620 70%, #66111a);
+  box-shadow: 0 18px 50px rgba(30, 2, 6, 0.6), inset 0 0 30px rgba(255, 200, 100, 0.10);
+  text-align: center;
+}
+
+.seal {
+  width: 58px; height: 58px;
+  margin: 0 auto 12px;
+  display: grid; place-items: center;
+  border: 3px solid #ffd977;
+  border-radius: 10px;
+  background: #8c1c20;
+  color: #ffe6a0;
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 36px;
+  line-height: 1;
+  transform: rotate(-6deg);
+  box-shadow: 0 4px 14px rgba(30, 2, 6, 0.35);
+}
+
+.panel h1 {
+  margin: 0 0 8px;
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 30px;
+  letter-spacing: 4px;
+  color: #ffe6a0;
+  text-shadow: 0 2px 10px rgba(255, 180, 70, 0.35);
+}
+.panel h2 {
+  margin: 0 0 16px;
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 25px;
+  letter-spacing: 3px;
+  color: #ffe6a0;
+}
+.sub { margin: 0 0 22px; font-size: 13px; color: #ffd9a0; opacity: 0.92; line-height: 1.6; }
+
+.panel label {
+  display: block;
+  margin: 16px 0 8px;
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #ffd977;
+}
+
+#playerName {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 214, 120, 0.6);
+  border-radius: 10px;
+  background: rgba(60, 8, 14, 0.55);
+  color: #fff0c8;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+}
+#playerName:focus { border-color: #ffe6a0; box-shadow: 0 0 0 3px rgba(255, 214, 120, 0.18); }
+#playerName::placeholder { color: rgba(255, 226, 160, 0.5); }
+
+.outfits { display: flex; gap: 10px; }
+.outfit-chip {
+  flex: 1;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(255, 214, 120, 0.4);
+  border-radius: 10px;
+  background: rgba(60, 8, 14, 0.42);
+  color: #ffe2a0;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.outfit-chip.active { border-color: #ffe6a0; background: rgba(255, 205, 100, 0.18); box-shadow: 0 0 12px rgba(255, 205, 100, 0.25); }
+.swatch { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ffe6a0; }
+.swatch.red { background: #d8323c; }
+.swatch.gold { background: #eaa72c; }
+.swatch.jade { background: #2f8f7e; }
+
+.enter {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 22px;
+  border: 2px solid #fff0c0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f0bd4c, #cf8722);
+  color: #5a1a0c;
+  font-family: "STKaiti", "KaiTi", "PingFang SC", serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(40, 4, 8, 0.35);
+  transition: transform 0.12s;
+}
+.enter:active { transform: scale(0.98); }
+
+.login-tips { margin-top: 16px; font-size: 11px; line-height: 1.8; color: rgba(255, 226, 160, 0.75); }
+
+.help-panel { text-align: left; }
+.help-panel ul { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.9; color: #ffe9c0; }
+.help-panel li { margin-bottom: 6px; }
+.help-panel b { color: #ffd977; }
+.help-panel .enter { text-align: center; }
+
+/* ---------- 移动端 ---------- */
+
+@media (max-width: 720px) {
+  #hud { padding: 10px 10px; padding-top: max(10px, env(safe-area-inset-top)); gap: 8px; }
+  .hud-card { padding: 6px 10px 6px 6px; gap: 7px; }
+  .avatar { width: 32px; height: 32px; flex-basis: 32px; font-size: 18px; }
+  .hud-name { font-size: 13px; }
+  .hud-tag { display: none; }
+  .hud-stats { font-size: 10px; }
+  .hud-stats b { font-size: 12px; }
+  .hud-stats i { margin: 0 4px; }
+  .chip { min-height: 34px; padding: 0 10px; font-size: 11px; }
+  .hud-actions { flex-direction: column; gap: 5px; }
+
+  #hintBar {
+    bottom: calc(112px + env(safe-area-inset-bottom));
+    max-width: 94vw;
+    padding: 7px 12px;
+    font-size: 11px;
+    white-space: normal;
+    line-height: 1.4;
+  }
+  #toast { top: 76px; font-size: 15px; padding: 8px 18px; }
+
+  #actionBar { right: 10px; bottom: calc(14px + env(safe-area-inset-bottom)); gap: 8px; }
+  .action { width: 62px; height: 62px; font-size: 16px; }
+  .action small { font-size: 9px; }
+  #joystick { left: 12px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 106px; height: 106px; }
+  #joystickKnob { width: 44px; height: 44px; }
+
+  .panel { padding: 22px 20px 20px; }
+  .panel h1 { font-size: 25px; letter-spacing: 2px; }
+  .seal { width: 48px; height: 48px; font-size: 29px; }
+}
+
+/* 横屏但高度较小的设备，收紧上下占位。 */
+@media (max-height: 480px) {
+  #hintBar { bottom: 76px; padding: 5px 12px; font-size: 11px; }
+  #actionBar { bottom: 10px; }
+  .action { width: 58px; height: 58px; font-size: 15px; }
+  #joystick { width: 92px; height: 92px; bottom: 10px; }
+  #toast { top: 62px; }
+}
+
+/* ---------- 同殿静默共处（Sansa 式零门槛多人） ---------- */
+
+.label-note { font-size: 11px; font-weight: 400; color: rgba(255, 214, 120, 0.7); margin-left: 6px; }
+.name-row { display: flex; gap: 8px; align-items: stretch; }
+.name-row input { flex: 1 1 auto; min-width: 0; }
+.dice {
+  flex: 0 0 auto;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 214, 120, 0.55);
+  border-radius: 8px;
+  background: rgba(140, 32, 36, 0.55);
+  color: #ffe2a0;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.dice:hover { background: rgba(180, 48, 42, 0.8); }
+.dice:active { transform: scale(0.96); }
+
+#fellowship {
+  position: absolute;
+  right: 18px;
+  top: 74px;
+  z-index: 5;
+  width: 186px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 214, 120, 0.38);
+  border-radius: 14px;
+  background: rgba(96, 18, 24, 0.72);
+  box-shadow: 0 6px 18px rgba(40, 4, 8, 0.3);
+  backdrop-filter: blur(6px);
+  color: #ffe2a0;
+  font-size: 11px;
+  line-height: 1.6;
+  pointer-events: none;
+}
+.fellow-count { font-size: 12px; white-space: nowrap; cursor: pointer; pointer-events: auto; user-select: none; }
+.fellow-count b { font-size: 15px; color: #fff3c8; margin-right: 2px; }
+.fellow-arrow { display: inline-block; margin-left: 4px; opacity: 0.7; font-size: 10px; }
+#hudLink { color: #ffd977; opacity: 0.85; }
+#hudLink.offline { color: #d9b79a; }
+.fellow-lessons { margin-top: 2px; white-space: nowrap; opacity: 0.9; }
+.fellow-lessons b { color: #fff3c8; }
+.fellow-btns { display: flex; gap: 6px; margin-top: 8px; pointer-events: auto; }
+.mini {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 2px;
+  border: 1px solid rgba(255, 214, 120, 0.5);
+  border-radius: 9px;
+  background: rgba(140, 32, 36, 0.62);
+  color: #ffe2a0;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.12s, background 0.2s;
+}
+.mini small { display: block; font-size: 9px; opacity: 0.65; }
+.mini:hover { background: rgba(180, 48, 42, 0.85); }
+.mini:active { transform: scale(0.94); }
+.mini.on { border-color: #fff0c0; background: rgba(200, 72, 40, 0.85); }
+.fellow-note { margin-top: 7px; font-size: 10px; opacity: 0.62; }
+
+#zenNote {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: 168px;
+  transform: translateX(-50%);
+  z-index: 5;
+  padding: 7px 18px;
+  border-radius: 20px;
+  background: rgba(60, 16, 20, 0.55);
+  color: rgba(255, 232, 180, 0.85);
+  font-size: 12px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+body.zen #zenNote { display: block; }
+body.zen .hud-stats,
+body.zen .fellow-count,
+body.zen .fellow-lessons,
+body.zen .fellow-note,
+body.zen #hintBar { opacity: 0.16; }
+body.zen #actionBar,
+body.zen #joystick { opacity: 0.32; }
+
+/* 玩法说明条目变多，避免小屏下面板溢出屏幕。 */
+#helpOverlay .panel { max-height: 86vh; overflow-y: auto; }
+#helpOverlay .panel::-webkit-scrollbar { width: 6px; }
+#helpOverlay .panel::-webkit-scrollbar-thumb { background: rgba(255, 214, 120, 0.35); border-radius: 3px; }
+
+@media (max-width: 720px) {
+  /* 竖屏视野窄，默认收成一条小胶囊，避免压住右侧财神像；
+     点一下「同殿 N 人」才展开功课与三个按钮。 */
+  #fellowship { right: 10px; top: 92px; width: auto; min-width: 0; padding: 6px 9px; font-size: 10px; }
+  #fellowship .fellow-lessons,
+  #fellowship .fellow-btns,
+  #fellowship .fellow-note { display: none; }
+  body.fellow-open #fellowship { width: 158px; padding: 8px 9px; }
+  body.fellow-open #fellowship .fellow-lessons { display: block; }
+  body.fellow-open #fellowship .fellow-btns { display: flex; }
+  body.fellow-open #fellowship .fellow-note { display: block; }
+  .fellow-count { font-size: 11px; }
+  .fellow-count b { font-size: 13px; }
+  .mini { font-size: 11px; padding: 5px 1px; }
+  .fellow-note { font-size: 9px; }
+  #zenNote { bottom: 190px; font-size: 11px; max-width: 90vw; white-space: normal; text-align: center; }
+  .dice { padding: 0 9px; font-size: 11px; }
+}
