@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#8c1c20">
+  <title>财神庙 · 同殿祈福互动场景</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="css/style.css?v=16">
+</head>
+<body>
+  <div id="app">
+    <div id="stage">
+      <canvas id="gameCanvas" aria-label="青城山道观 · 财神殿 3D 互动场景"></canvas>
+      <canvas id="fxCanvas" aria-hidden="true"></canvas>
+
+      <header id="hud">
+        <div class="hud-card">
+          <div class="avatar">福</div>
+          <div class="hud-info">
+            <div class="hud-name"><span id="hudName">善信</span><span class="hud-tag" id="hudTag">进庙祈福中</span></div>
+            <div class="hud-stats">
+              功德 <b id="hudMerit">0</b>
+              <i></i>香火 <b id="hudIncense">3</b>
+              <i></i>叩拜 <b id="hudBows">0</b>
+            </div>
+          </div>
+        </div>
+        <div class="hud-actions">
+          <button id="btnMusic" class="chip" type="button">道乐 开</button>
+          <button id="btnHelp" class="chip" type="button">玩法</button>
+        </div>
+      </header>
+
+      <!-- 同殿静默共处：只显示人数与功课，不做聊天、好友、排行榜。 -->
+      <div id="fellowship">
+        <div class="fellow-count" id="fellowToggle" title="点开 / 收起同殿面板"><b id="hudPeers">1</b> 位香客同殿 · <span id="hudLink">连接中</span> <span class="fellow-arrow" id="fellowArrow">▾</span></div>
+        <div class="fellow-lessons">百八拜 <b id="hudBows108">0</b>/108 · 念珠 <b id="hudBeads">0</b>/108</div>
+        <div class="fellow-btns">
+          <button id="btnGreet" class="mini" type="button">合掌 <small>G</small></button>
+          <button id="btnBead" class="mini" type="button">念珠 <small>B</small></button>
+          <button id="btnZen" class="mini" type="button">放空 <small>Z</small></button>
+        </div>
+        <div class="fellow-note">一起拜，不用说话</div>
+      </div>
+
+      <div id="zenNote">放空中 · 什么都不做也可以，点「回来」继续</div>
+      <div id="toast" role="status"></div>
+      <div id="hintBar"><span id="hudHint">镜头一路跟随，点击蒲团落座膜拜，也可以点某位香客合掌致意。</span></div>
+
+      <div id="joystick" aria-label="虚拟方向摇杆">
+        <div id="joystickKnob"></div>
+        <span class="joy-label">移动</span>
+      </div>
+
+      <div id="actionBar">
+        <button id="btnWorship" class="action primary" type="button"><span>膜拜</span><small>E</small></button>
+        <button id="btnIncense" class="action" type="button"><span>上香</span><small>F</small></button>
+        <button id="btnStand" class="action" type="button"><span>起身</span><small>空格</small></button>
+      </div>
+
+      <div id="loginOverlay" class="overlay">
+        <div class="panel">
+          <div class="seal">財</div>
+          <h1>青城财神殿 · 同殿祈福</h1>
+          <p class="sub">不用注册、不用捏脸，点一下就进殿。满殿还有其他香客，各自安静地拜，彼此看得见，却不必说话 —— 在上班和上进之间，先来上一炷香。</p>
+          <label for="playerName">怎么称呼你 <span class="label-note">留空就赐一个道号</span></label>
+          <div class="name-row">
+            <input id="playerName" type="text" maxlength="12" placeholder="清澈的松风" autocomplete="off">
+            <button id="btnDice" class="dice" type="button">换一个</button>
+          </div>
+          <label>挑一身喜庆衣裳</label>
+          <div class="outfits">
+            <button class="outfit-chip active" data-index="0" type="button"><span class="swatch red"></span>红袍</button>
+            <button class="outfit-chip" data-index="1" type="button"><span class="swatch gold"></span>金袍</button>
+            <button class="outfit-chip" data-index="2" type="button"><span class="swatch jade"></span>青袍</button>
+          </div>
+          <button id="btnLogin" class="enter" type="button">一键入殿 · 同殿静候</button>
+          <div class="login-tips">打开即入殿、随机道号、零社交：可合掌致意，无聊天 / 好友 / 排行榜<br>电脑：WASD / 方向键移动，点击地面自动走过去<br>手机：左下摇杆移动，点蒲团或香炉自动走过去</div>
+        </div>
+      </div>
+
+      <div id="helpOverlay" class="overlay hidden">
+        <div class="panel help-panel">
+          <h2>玩法说明</h2>
+          <ul>
+            <li><b>移动</b>：WASD 或方向键；也可以直接点击地面，小人会自己走过去。镜头始终跟随小人、人物保持画面居中，殿内拜台、龛前横廊、东西廊庑和殿前外庭都能走到。</li>
+            <li><b>膜拜</b>：殿内共 150 个蒲团，点击任意一个，小人走过去坐下并行三拜；按 E 或点「膜拜」可自动找最近的蒲团。</li>
+            <li><b>上香</b>：点击庙前香炉，小人走到炉前上香；按 F 或点「上香」同样有效。</li>
+            <li><b>起身</b>：落座后按空格、Esc 或点「起身」离开蒲团。</li>
+            <li><b>同殿香客</b>：右上角显示此刻同殿的人数；看得见别人走动、落座、叩拜，头顶是各人的道号。<b>点某位香客</b>或按 G / 点「合掌」可向最近的一位合掌致意 —— 这是唯一的社交动作，没有聊天、好友和排行榜。</li>
+            <li><b>功课</b>：每叩拜一次累积「百八拜」，按 B 或点「念珠」拨一颗；满 108 会有提示。功德 +1，班味 −1。</li>
+            <li><b>放空</b>：按 Z 或点「放空」，数字与提示淡出，只留道乐与殿宇；什么都不做、挂着听一会儿也算玩，再点「回来」即可继续。</li>
+            <li><b>道乐</b>：按 M 或点右上角开关可开关道乐与法器音效；登录页移动鼠标可轻微改变观景角度，进庙后为保证人物居中不再随鼠标偏移。</li>
+            <li><b>手机</b>：左下摇杆控制方向，右下三个按钮执行动作，点击场景也能自动寻路。竖屏右上角默认只显示「同殿 N 人」，点一下可展开合掌 / 念珠 / 放空，再点收起，免得挡住财神像。</li>
+            <li><b>独拜</b>：云端未连通时右上角会显示「独拜」，单人膜拜、上香、功课全部照常，只是看不到其他真人香客。</li>
+          </ul>
+          <button id="btnHelpClose" class="enter" type="button">知道了</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 带版本号，避免浏览器沿用旧缓存导致交互修复不生效 -->
+  <script src="js/config.js?v=16"></script>
+  <script src="js/art.js?v=16"></script>
+  <script src="js/audio.js?v=16"></script>
+  <script src="js/gold-texture.js?v=16"></script>
+  <script src="js/scene.js?v=16"></script>
+  <script src="js/player.js?v=16"></script>
+  <script src="js/input.js?v=16"></script>
+  <script src="js/ui.js?v=16"></script>
+  <script src="vendor/three.min.js?v=16"></script>
+  <script src="js/world3d.js?v=16"></script>
+  <script src="js/multiplayer.js?v=16"></script>
+  <script src="js/main.js?v=16"></script>
+</body>
+</html>
